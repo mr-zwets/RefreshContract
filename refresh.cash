@@ -1,0 +1,62 @@
+pragma cashscript ^0.6.0;
+
+// Payout() can be invoked after PERIOD, to address provided in last refresh()
+// each refresh() requires the output to increase with INCREMENT
+
+contract LastToRefreshWins(
+    int increment, 
+    int period,
+    bytes20 pkhFeeAddress,
+    bytes8 lastBalance,
+    bytes20 pkhRecipient
+) {
+    function refresh(
+        pubkey pk, 
+        sig s, 
+        bytes20 pkhNewRecipient, // Serves both as change address and final return address
+        bool hasChangeOutput,
+        bytes8 amountChange
+    ) {
+        require(checkSig(s, pk));
+
+        int intLastBalance = int(bytes(lastBalance));
+        require(intLastBalance<2100000000); //limited below ~21 BCH
+        int intAmountChange = int(bytes(amountChange));
+        require(intAmountChange<2100000000); //limited below ~21 BCH
+        bytes8 newBalance = bytes8(intLastBalance + increment);
+        bytes newContract = 0x14 + pkhNewRecipient + 0x08 + newBalance + tx.bytecode.split(30)[1];
+        // Simulating local state by cutting the two first constructor parameters from the redeem script
+        // And add them back with new values, separated by their respective byte lengths in small endian hex 
+        // Constructor parameters are added in reverse order,
+        // so pkhRecipient is actually the first statement in the contract bytecode.
+        if(hasChangeOutput){
+        // If sender wants a change output
+            bytes32 outputNewContract = new OutputP2SH(newBalance, hash160(newContract));
+            bytes34 outputChange = new OutputP2PKH(amountChange, pkhNewRecipient);
+            require(hash256(outputNewContract+outputChange) == tx.hashOutputs);
+            // requires the first output to be a P2SH sending lastbalance plus increment to the altered contract
+            // and the second output a P2PK output with amount and pk provided as arguments
+            // updates the recepient for claim function & updates lastbalance to newbalance.
+        } else {
+            bytes32 outputNewContract = new OutputP2SH(newBalance, hash160(newContract));
+            require(hash256(outputNewContract) == tx.hashOutputs);
+        }
+    }
+    function payout(
+        pubkey pk, 
+        sig s,
+        bytes8 contractFee
+    ) {
+        require(checkSig(s, pk));
+
+        int intValue = int(bytes(lastBalance));
+        int intContractFee = int(bytes(contractFee));
+        require(intValue / 10 == intContractFee);
+        int minerFee = 1000; // hardcoded fee
+        bytes8 amount = bytes8(intValue - intContractFee - minerFee);
+        bytes34 output = new OutputP2PKH(amount, pkhRecipient);
+        bytes34 outputFee = new OutputP2PKH(contractFee, pkhFeeAddress);
+        require(tx.hashOutputs == hash256(output+outputFee)); //check receiver address
+        require(tx.age >= period); //check timeout
+    }
+}

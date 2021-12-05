@@ -1,0 +1,78 @@
+{
+  "contractName": "LastToRefreshWins",
+  "constructorInputs": [
+    {
+      "name": "increment",
+      "type": "int"
+    },
+    {
+      "name": "period",
+      "type": "int"
+    },
+    {
+      "name": "pkhFeeAddress",
+      "type": "bytes20"
+    },
+    {
+      "name": "lastBalance",
+      "type": "bytes8"
+    },
+    {
+      "name": "pkhRecipient",
+      "type": "bytes20"
+    }
+  ],
+  "abi": [
+    {
+      "name": "refresh",
+      "covenant": true,
+      "inputs": [
+        {
+          "name": "pk",
+          "type": "pubkey"
+        },
+        {
+          "name": "s",
+          "type": "sig"
+        },
+        {
+          "name": "pkhNewRecipient",
+          "type": "bytes20"
+        },
+        {
+          "name": "hasChangeOutput",
+          "type": "bool"
+        },
+        {
+          "name": "amountChange",
+          "type": "bytes8"
+        }
+      ]
+    },
+    {
+      "name": "payout",
+      "covenant": true,
+      "inputs": [
+        {
+          "name": "pk",
+          "type": "pubkey"
+        },
+        {
+          "name": "s",
+          "type": "sig"
+        },
+        {
+          "name": "contractFee",
+          "type": "bytes8"
+        }
+      ]
+    }
+  ],
+  "bytecode": "OP_5 OP_PICK OP_0 OP_NUMEQUAL OP_IF OP_6 OP_PICK OP_NOP 68 OP_SPLIT OP_NIP OP_SIZE 34 OP_SUB OP_SPLIT OP_12 OP_SPLIT OP_NIP 20 OP_SPLIT OP_DROP OP_10 OP_ROLL OP_10 OP_ROLL OP_2DUP OP_SWAP OP_SIZE OP_1SUB OP_SPLIT OP_DROP OP_12 OP_ROLL OP_SHA256 OP_ROT OP_CHECKDATASIGVERIFY OP_CHECKSIGVERIFY OP_5 OP_ROLL OP_BIN2NUM OP_DUP 00752b7d OP_LESSTHAN OP_VERIFY OP_10 OP_PICK OP_BIN2NUM 00752b7d OP_LESSTHAN OP_VERIFY OP_3 OP_ROLL OP_ADD OP_8 OP_NUM2BIN 14 OP_8 OP_PICK OP_CAT OP_8 OP_CAT OP_OVER OP_CAT OP_3 OP_ROLL 1e OP_SPLIT OP_NIP OP_CAT OP_8 OP_ROLL OP_IF OP_OVER 17a914 OP_CAT OP_OVER OP_HASH160 OP_CAT 87 OP_CAT OP_9 OP_PICK 1976a914 OP_CAT OP_9 OP_PICK OP_CAT 88ac OP_CAT OP_2DUP OP_CAT OP_HASH256 OP_5 OP_PICK OP_EQUALVERIFY OP_2DROP OP_ELSE OP_OVER 17a914 OP_CAT OP_OVER OP_HASH160 OP_CAT 87 OP_CAT OP_DUP OP_HASH256 OP_4 OP_PICK OP_EQUALVERIFY OP_DROP OP_ENDIF OP_2DROP OP_2DROP OP_2DROP OP_2DROP OP_DROP OP_1 OP_ELSE OP_5 OP_ROLL OP_1 OP_NUMEQUALVERIFY OP_5 OP_PICK OP_SIZE 28 OP_SUB OP_SPLIT OP_NIP 20 OP_SPLIT OP_DROP OP_8 OP_ROLL OP_8 OP_ROLL OP_2DUP OP_SWAP OP_SIZE OP_1SUB OP_SPLIT OP_DROP OP_10 OP_ROLL OP_SHA256 OP_ROT OP_CHECKDATASIGVERIFY OP_CHECKSIGVERIFY OP_4 OP_ROLL OP_BIN2NUM OP_6 OP_PICK OP_BIN2NUM OP_OVER OP_10 OP_DIV OP_OVER OP_NUMEQUALVERIFY e803 OP_ROT OP_ROT OP_SUB OP_SWAP OP_SUB OP_8 OP_NUM2BIN 1976a914 OP_CAT OP_5 OP_ROLL OP_CAT 88ac OP_CAT OP_5 OP_ROLL 1976a914 OP_CAT OP_5 OP_ROLL OP_CAT 88ac OP_CAT OP_CAT OP_HASH256 OP_EQUALVERIFY OP_SWAP OP_CHECKSEQUENCEVERIFY OP_2DROP OP_1 OP_ENDIF",
+  "source": "pragma cashscript ^0.6.0;\r\n\r\n// Funds can be claim()ed after PERIOD, to address provided in last refresh()\r\n// each refresh() requires the output to increase with INCREMENT\r\n\r\ncontract LastToRefreshWins(\r\n    int increment, \r\n    int period,\r\n    bytes20 pkhFeeAddress,\r\n    bytes8 lastBalance,\r\n    bytes20 pkhRecipient\r\n) {\r\n    function refresh(\r\n        pubkey pk, \r\n        sig s, \r\n        bytes20 pkhNewRecipient, // Serves both as change address and final return address\r\n        bool hasChangeOutput,\r\n        bytes8 amountChange\r\n    ) {\r\n        require(checkSig(s, pk));\r\n\r\n        int intLastBalance = int(bytes(lastBalance));\r\n        require(intLastBalance<2100000000); //limited below ~21 BCH\r\n        int intAmountChange = int(bytes(amountChange));\r\n        require(intAmountChange<2100000000); //limited below ~21 BCH\r\n        bytes8 newBalance = bytes8(intLastBalance + increment);\r\n        bytes newContract = 0x14 + pkhNewRecipient + 0x08 + newBalance + tx.bytecode.split(30)[1];\r\n        // Simulating local state by cutting the two first constructor parameters from the redeem script\r\n        // And add them back with new values, separated by their respective byte lengths in small endian hex \r\n        // Constructor parameters are added in reverse order,\r\n        // so pkhRecipient is actually the first statement in the contract bytecode.\r\n        if(hasChangeOutput){\r\n        // If sender wants a change output\r\n            bytes32 outputNewContract = new OutputP2SH(newBalance, hash160(newContract));\r\n            bytes34 outputChange = new OutputP2PKH(amountChange, pkhNewRecipient);\r\n            require(hash256(outputNewContract+outputChange) == tx.hashOutputs);\r\n            // requires the first output to be a P2SH sending lastbalance plus increment to the altered contract\r\n            // and the second output a P2PK output with amount and pk provided as arguments\r\n            // updates the recepient for claim function & updates lastbalance to newbalance.\r\n        } else {\r\n            bytes32 outputNewContract = new OutputP2SH(newBalance, hash160(newContract));\r\n            require(hash256(outputNewContract) == tx.hashOutputs);\r\n        }\r\n    }\r\n    function payout(\r\n        pubkey pk, \r\n        sig s,\r\n        bytes8 contractFee\r\n    ) {\r\n        require(checkSig(s, pk));\r\n\r\n        int intValue = int(bytes(lastBalance));\r\n        int intContractFee = int(bytes(contractFee));\r\n        require(intValue / 10 == intContractFee);\r\n        int minerFee = 1000; // hardcoded fee\r\n        bytes8 amount = bytes8(intValue - intContractFee - minerFee);\r\n        bytes34 output = new OutputP2PKH(amount, pkhRecipient);\r\n        bytes34 outputFee = new OutputP2PKH(contractFee, pkhFeeAddress);\r\n        require(tx.hashOutputs == hash256(output+outputFee)); //check receiver address\r\n        require(tx.age >= period); //check timeout\r\n    }\r\n}\r\n",
+  "compiler": {
+    "name": "cashc",
+    "version": "0.6.1"
+  },
+  "updatedAt": "2021-11-21T08:18:18.887Z"
+}
