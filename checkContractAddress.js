@@ -1,4 +1,6 @@
-// Javascript program for checking BCH address for the smart contract given contract parameters
+// Javascript program for checking BCH address for the smart contract
+// Checks initial address initial state given contract parameters
+// Can change lastbalance & pkhRecipient to check address different state
 
 // import json artifact that's compiled from refresh.cash with cashc
 const smartContractCode = require("./refresh.json");
@@ -9,34 +11,31 @@ const { Contract, ElectrumNetworkProvider } = require("cashscript");
 // Initialise a network provider for network operations on MAINNET
 const provider = new ElectrumNetworkProvider("mainnet");
 
-checkContractAddress();
+const increment = contractParams.increment;
+const relativeLocktime = contractParams.period;
+const pkhFeeAddressHex = contractParams.pkhFeeAddress;
+const pkhFeeAddress = Buffer.from(pkhFeeAddressHex, "hex");
 
-async function checkContractAddress() {
-  const increment = contractParams.increment;
-  const relativeLocktime = contractParams.period;
-  const pkhFeeAddressHex = contractParams.pkhFeeAddress;
-  const pkhFeeAddress = Buffer.from(pkhFeeAddressHex, "hex");
+const lastbalance = contractParams.initialBalance; // change to balance contract state
+const pkhRecipient = pkhFeeAddress; // change to pkhRecipient contract state
 
-  const initialBalance = contractParams.initialBalance;
-  const initialBalanceBytes = Buffer.from(intToHex(initialBalance), "hex");
-  const pkhRecipient = pkhFeeAddress;
+const lastBalanceBytes = Buffer.from(intToHex(lastbalance), "hex");
 
-  const params = [
-    increment,
-    relativeLocktime,
-    pkhFeeAddress,
-    initialBalanceBytes,
-    pkhRecipient,
-  ];
-  const contractImplementation = new Contract(
-    smartContractCode,
-    params,
-    provider
-  );
-  console.log("The contract parameters from the JSON file contractParams");
-  console.log("result in a BCH contract with the following address:");
-  console.log(contractImplementation.address);
-}
+const params = [
+  increment,
+  relativeLocktime,
+  pkhFeeAddress,
+  lastBalanceBytes,
+  pkhRecipient,
+];
+const contractImplementation = new Contract(
+  smartContractCode,
+  params,
+  provider
+);
+console.log("The contract parameters from the JSON file contractParams");
+console.log("result in a BCH contract with the following address:");
+console.log(contractImplementation.address);
 
 function intToHex(int) {
   let hexBigEndian = int.toString(16);
