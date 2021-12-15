@@ -16,7 +16,7 @@ const relativeLocktime = contractParams.period;
 const pkhFeeAddressHex = contractParams.pkhFeeAddress;
 const pkhFeeAddress = Buffer.from(pkhFeeAddressHex, "hex");
 
-const lastbalance = contractParams.initialBalance; // change to balance contract state
+const lastbalance = contractParams.initialBalance; // change to balance contract state (in sats)
 const pkhRecipient = pkhFeeAddress; // change to pkhRecipient contract state
 
 const lastBalanceBytes = Buffer.from(intToHex(lastbalance), "hex");
