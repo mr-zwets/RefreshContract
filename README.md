@@ -6,7 +6,8 @@
 - `refresh.json ` the compiled smart contract artifact imported by other files
 - `contractParams.json` parameters used to make contract, imported by JS files
 - `checkContractAddress.js` uses cashscriptSDK check address of smart contract given contract params
-- `invokePayout.js` uses cashscriptSDK to invoke payout function of smart contract
+- `invokePayout.js` uses cashscriptSDK to invoke payout function of the smart contract
+- `refreshContract.js` uses cashscriptSDK to invoke the refresh function of the smart contract
 
 ### Contract functionality
 
