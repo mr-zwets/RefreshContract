@@ -1,9 +1,12 @@
 # Refresh.Cash smart contract
 
-### General
+### Files Structure
 
-The code of the smart contract is located in `refresh.cash`.
-It is written with cashscript, hence the extention.
+- `refresh.cash` the smart contract code, written in cashscript
+- `refresh.json ` the compiled smart contract artifact imported by other files
+- `contractParams.json` parameters used to make contract, imported by JS files
+- `checkContractAddress.js` uses cashscriptSDK check address of smart contract given contract params
+- `invokePayout.js` uses cashscriptSDK to invoke payout function of smart contract
 
 ### Contract functionality
 
