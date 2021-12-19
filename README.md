@@ -2,12 +2,12 @@
 
 ### Files Structure
 
-- `refresh.cash` the smart contract code, written in cashscript
+- `refresh.cash` the smart contract code, written in [Cashscript](https://cashscript.org/)
 - `refresh.json ` the compiled smart contract artifact imported by other files
 - `contractParams.json` parameters used to make contract, imported by JS files
-- `checkContractAddress.js` uses cashscriptSDK check address of smart contract given contract params
-- `invokePayout.js` uses cashscriptSDK to invoke payout function of the smart contract
-- `refreshContract.js` uses cashscriptSDK to invoke the refresh function of the smart contract
+- `checkContractAddress.js` uses [CashscriptSDK](https://cashscript.org/docs/sdk/examples/) & [BCH-JS](https://github.com/Permissionless-Software-Foundation/bch-js) to check address of the smart contract given contract params
+- `invokePayout.js` uses [CashscriptSDK](https://cashscript.org/docs/sdk/examples/) & [BCH-JS](https://github.com/Permissionless-Software-Foundation/bch-js) to invoke payout function of the smart contract
+- `refreshContract.js` uses [CashscriptSDK](https://cashscript.org/docs/sdk/examples/) & [BCH-JS](https://github.com/Permissionless-Software-Foundation/bch-js) to invoke the refresh function of the smart contract
 
 ### Contract functionality
 
