@@ -1,6 +1,6 @@
 {
-    "period":5,
-    "increment": 1000,
-    "initialBalance": 1000,
-    "pkhFeeAddress":"d9b7ce22f5167ae267f8a88ca8daf38c8212f73b"
+    "period":18,
+    "increment": 300000,
+    "initialBalance": 100000000,
+    "pkhFeeAddress":"85e9ab2bdfc966db14dde98fa8363e8734d3b997"
 }
